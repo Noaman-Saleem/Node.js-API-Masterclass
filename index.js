@@ -8,10 +8,13 @@ const PORT = process.env.PORT || 5000;
 
 //Load ENV vars
 dotenv.config({ path: "./config/config.env" });
+
 //Load MongoDB Connection
 const connectDB = require("./config/db");
+
 //Route Files
 const bootcamps = require("./routes/bootcamps");
+const courses = require("./routes/courses");
 
 //Connect to MongoDB
 connectDB();
@@ -21,6 +24,7 @@ app.use(express.json());
 
 //Mount Routers
 app.use("/api/v1/bootcamps", bootcamps);
+app.use("/api/v1/courses", courses);
 
 //This middleware must have to be after Mount Router otherwise it will not work
 app.use(errorHandler);
