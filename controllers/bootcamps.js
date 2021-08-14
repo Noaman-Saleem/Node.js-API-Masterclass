@@ -56,7 +56,11 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
   // console.log(queryString);
 
   //Finding resource
-  query = Bootcamp.find(JSON.parse(queryString));
+  query = Bootcamp.find(JSON.parse(queryString)).populate("courses");
+  // .populate({
+  //   path: "courses",
+  //   select: "title tuition",
+  // }); //we can pass the object here like Courses to select the certain fields
   // console.log(JSON.parse(queryString));
 
   //Select Fields
@@ -162,7 +166,12 @@ exports.updateBootcamps = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/v1/bootcamps/:id
 // @access  Private
 exports.deleteBootcamps = asyncHandler(async (req, res, next) => {
-  const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id);
+  //findByIdAndDelete will not triger the CASCADE Course Delete middleware in the Bootcamp model file
+  //So we use   bootcamp.remove() instead that trigers the middleware
+  // const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id);
+
+  const bootcamp = await Bootcamp.findById(req.params.id);
+
   if (!bootcamp) {
     // return res.status(400).json({ success: false });
     return next(
@@ -172,6 +181,9 @@ exports.deleteBootcamps = asyncHandler(async (req, res, next) => {
       )
     );
   }
+  //.remove() instead that trigers the middleware
+  bootcamp.remove();
+
   res.status(200).json({ success: true, data: {} });
 });
 
