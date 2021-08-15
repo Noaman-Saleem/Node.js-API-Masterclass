@@ -38,4 +38,48 @@ const CourseSchema = new mongoose.Schema({
   },
 });
 
+//Static vs Method
+// Course.goFish()   Static: Directly called on model
+
+// const courses = Course.goFish()
+// courses.goFish()  Method: Called on something you created by model
+
+//Define a Static method to get average to course tuitions
+CourseSchema.statics.getAverageCost = async function (bootcampId) {
+  // console.log("Calculating the avg cost.......".blue);
+
+  //obj is an array [{ _id: 677647hggd46f, averageCost : 5000}]
+  const obj = await this.aggregate([
+    {
+      $match: { bootcamp: bootcampId },
+    },
+    {
+      $group: {
+        _id: "$bootcamp",
+        averageCost: { $avg: "$tuition" },
+      },
+    },
+  ]);
+
+  // console.log(obj);
+
+  try {
+    await this.model("Bootcamp").findByIdAndUpdate(bootcampId, {
+      averageCost: Math.ceil(obj[0].averageCost / 10) * 10,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+//Call getAverageCost after save
+CourseSchema.post("save", function () {
+  this.constructor.getAverageCost(this.bootcamp);
+});
+
+//Call getAverageCost before remove
+CourseSchema.pre("remove", function () {
+  this.constructor.getAverageCost(this.bootcamp);
+});
+
 module.exports = mongoose.model("Course", CourseSchema);
