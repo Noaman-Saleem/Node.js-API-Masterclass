@@ -109,7 +109,7 @@ exports.deleteCourse = asyncHandler(async (req, res, next) => {
   // console.log(course);
 
   if (!course) {
-    console.log("Inside error");
+    // console.log("Inside error");
     return next(
       new ErrorResponse(`No Course with the id of ${req.params.id}`),
       404

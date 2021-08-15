@@ -2,12 +2,14 @@ const express = require("express");
 const dotenv = require("dotenv");
 const colors = require("colors");
 const errorHandler = require("./middleware/error");
-
-const app = express();
-const PORT = process.env.PORT || 5000;
+const fileupload = require("express-fileupload");
+const path = require("path");
 
 //Load ENV vars
 dotenv.config({ path: "./config/config.env" });
+
+const app = express();
+const PORT = process.env.PORT || 5000;
 
 //Load MongoDB Connection
 const connectDB = require("./config/db");
@@ -21,6 +23,12 @@ connectDB();
 
 //Body Parser
 app.use(express.json());
+
+//File uploading
+app.use(fileupload());
+
+//Set static folder
+app.use(express.static(path.join(__dirname, "public")));
 
 //Mount Routers
 app.use("/api/v1/bootcamps", bootcamps);

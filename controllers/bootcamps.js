@@ -2,6 +2,7 @@ const ErrorResponse = require("../utils/errorResponse");
 const Bootcamp = require("../models/Bootcamp");
 const geocoder = require("../utils/geocoder");
 const asyncHandler = require("../middleware/async");
+const path = require("path");
 
 // @desc    Get all Bootcamps
 // @route   GET /api/v1/bootcamps
@@ -185,6 +186,64 @@ exports.deleteBootcamps = asyncHandler(async (req, res, next) => {
   bootcamp.remove();
 
   res.status(200).json({ success: true, data: {} });
+});
+
+// @desc    Upload photo
+// @route   PUT /api/v1/bootcamps/:id/photo
+// @access  Private
+exports.bootcampPhotoUpload = asyncHandler(async (req, res, next) => {
+  const bootcamp = await Bootcamp.findById(req.params.id);
+
+  if (!bootcamp) {
+    return next(
+      new ErrorResponse(
+        `Bootcamp not found with the id of ${req.params.id}`,
+        404
+      )
+    );
+  }
+
+  //pexels.com  free stock photos here
+  if (!req.files) {
+    return next(new ErrorResponse(`Please upload a file`, 400));
+  }
+
+  // console.log(req.files); //mimetype: 'image/jpeg',
+
+  const file = req.files.file;
+  //Make sure the image is a photo
+  if (!file.mimetype.startsWith("image")) {
+    return next(new ErrorResponse(`Please upload an image file`, 400));
+  }
+
+  //Check file size
+  if (file.size > process.env.MAX_FILE_UPLOAD) {
+    return next(
+      new ErrorResponse(
+        `Please upload an image less than ${process.env.MAX_FILE_UPLOAD}`,
+        400
+      )
+    );
+  }
+
+  //Create custom filename
+  file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
+  // console.log(file.name);
+
+  file.mv(`${process.env.FILE_UPLOAD_PATH}/${file.name}`, async (err) => {
+    if (err) {
+      console.log(err);
+      //500 is Server error
+      return next(new ErrorResponse(`Problem with file upload`, 500));
+    }
+
+    await Bootcamp.findByIdAndUpdate(req.params.id, { photo: file.name });
+
+    // http://localhost:5000/uploads/photo_5d725a1b7b292f5f8ceff788.jpg
+    //see the file in your browser since Public is the Static folder
+  });
+
+  res.status(200).json({ success: true, data: file.name });
 });
 
 //******************OLD IS GOLD*****************************************************
